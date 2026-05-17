@@ -91,16 +91,7 @@ export default function EmergencyReport() {
         </div>
       </div>
 
-      <div className="bg-red-50 rounded-2xl p-6 border border-red-100 flex flex-col items-center text-center">
-        <div className="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
-          <AlertTriangle size={32} />
-        </div>
-
-        <h3 className="text-xl font-bold text-red-900 mb-2">Reportar Emergencia</h3>
-        <p className="text-red-700 text-sm mb-6 max-w-sm">
-          Si eres ciudadano, usa este botón para capturar evidencia inmediata del incidente.
-        </p>
-
+      <div className="w-full bg-transparent">
         {/* Input de archivo oculto configurado para usar la cámara en modo fotos */}
         <input
           type="file"
@@ -114,25 +105,27 @@ export default function EmergencyReport() {
         {!preview ? (
           <button
             onClick={handleCaptureClick}
-            className="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 transition-colors flex items-center justify-center gap-3 shadow-sm shadow-red-200"
+            className="w-full aspect-square max-h-[300px] mt-4 bg-red-600 text-white rounded-[2rem] hover:bg-red-700 active:scale-95 transition-all flex flex-col items-center justify-center gap-4 shadow-[0_8px_30px_rgb(220,38,38,0.3)]"
           >
-            <Camera size={24} />
-            Tomar fotografía
+            <Camera size={64} strokeWidth={1.5} />
+            <span className="text-2xl font-black tracking-widest uppercase">S.O.S</span>
           </button>
         ) : (
-          <div className="w-full flex flex-col gap-4">
-            <div className="relative rounded-xl overflow-hidden border-2 border-red-200 bg-black aspect-[3/4] w-full max-w-xs mx-auto">
-              <img src={preview} alt="Evidencia de emergencia" className="object-cover w-full h-full" />
+          <div className="w-full flex flex-col gap-4 mt-4">
+            <div className="relative rounded-3xl overflow-hidden border-2 border-red-100 bg-black aspect-[3/4] w-full max-w-sm mx-auto shadow-lg">
+              <img src={preview} alt="Evidencia" className="object-cover w-full h-full" />
+              
               <button 
                 onClick={handleCaptureClick}
-                className="absolute bottom-4 right-4 bg-white/90 text-gray-900 p-2 rounded-full shadow-lg"
+                className="absolute top-4 right-4 bg-black/50 backdrop-blur-md text-white p-3 rounded-full hover:bg-black/70 transition-colors"
               >
-                <Camera size={20} />
+                <X size={20} />
               </button>
+
               {location && (
-                <div className="absolute top-2 left-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1.5 rounded flex items-center gap-1.5 backdrop-blur-sm shadow-sm overflow-hidden">
-                  <MapPin size={12} className="shrink-0" />
-                  <span className="truncate">
+                <div className="absolute bottom-4 left-4 right-4 bg-black/60 text-white text-xs px-3 py-2.5 rounded-xl flex items-center gap-2 backdrop-blur-md">
+                  <MapPin size={16} className="shrink-0 text-red-400" />
+                  <span className="font-medium truncate drop-shadow-md">
                     {address ? address : `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`}
                   </span>
                 </div>
@@ -141,10 +134,10 @@ export default function EmergencyReport() {
             
             <button
               onClick={handleReport}
-              className="w-full bg-red-600 text-white font-bold py-4 rounded-xl hover:bg-red-700 transition-colors flex items-center justify-center gap-3 shadow-sm shadow-red-200"
+              className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-5 rounded-2xl hover:bg-red-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-xl shadow-red-200"
             >
               <UploadCloud size={24} />
-              Enviar Reporte
+              Enviar Inmediato
             </button>
           </div>
         )}
