@@ -6,6 +6,7 @@ import Input from '../components/Input';
 import { isValidEmail } from '../utils/validation';
 import { generateChallenge, base64URLStringToBuffer } from '../utils/webauthn';
 import { Fingerprint } from 'lucide-react';
+import { safeStorage } from '../utils/storage';
 
 export default function Login() {
   const [email, setEmail] = useState('');
@@ -15,7 +16,7 @@ export default function Login() {
   const [fastLoginAvailable, setFastLoginAvailable] = useState(false);
 
   useEffect(() => {
-    if (localStorage.getItem('biometric_fast_login') && localStorage.getItem('biometric_credential_id')) {
+    if (safeStorage.getItem('biometric_fast_login') && safeStorage.getItem('biometric_credential_id')) {
       setFastLoginAvailable(true);
     }
   }, []);
@@ -25,8 +26,8 @@ export default function Login() {
       setLoading(true);
       setError('');
       
-      const savedCredentialId = localStorage.getItem('biometric_credential_id');
-      const savedLoginInfo = localStorage.getItem('biometric_fast_login');
+      const savedCredentialId = safeStorage.getItem('biometric_credential_id');
+      const savedLoginInfo = safeStorage.getItem('biometric_fast_login');
       
       if (!savedCredentialId || !savedLoginInfo) throw new Error('No hay credenciales guardadas.');
       

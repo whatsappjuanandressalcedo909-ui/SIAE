@@ -3,14 +3,15 @@ import { generateChallenge, bufferToBase64URLString, base64URLStringToBuffer } f
 import { Fingerprint, Lock } from 'lucide-react';
 import { User } from 'firebase/auth'; // Ensure you've imported this
 import { auth } from '../firebase'; // Import your auth if you want to sign out
+import { safeStorage } from '../utils/storage';
 
 export default function LockScreen({ children, user }: { children: ReactNode, user: any }) {
   const [locked, setLocked] = useState(true);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const isBiometricEnabled = localStorage.getItem('biometric_app_lock') === 'true';
-  const savedCredentialId = localStorage.getItem('biometric_credential_id');
+  const isBiometricEnabled = safeStorage.getItem('biometric_app_lock') === 'true';
+  const savedCredentialId = safeStorage.getItem('biometric_credential_id');
 
   useEffect(() => {
     // Si no está habilitado, o NO hay usuario (está en login), no bloqueamos la app
@@ -104,7 +105,7 @@ export default function LockScreen({ children, user }: { children: ReactNode, us
 
       <button 
         onClick={() => {
-          localStorage.removeItem('biometric_app_lock');
+          safeStorage.removeItem('biometric_app_lock');
           auth.signOut();
           window.location.reload(); 
         }}

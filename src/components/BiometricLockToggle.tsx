@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { generateChallenge, bufferToBase64URLString } from '../utils/webauthn';
 import { Fingerprint, Lock, ShieldCheck, ShieldAlert } from 'lucide-react';
 import { User, EmailAuthProvider, reauthenticateWithCredential } from 'firebase/auth';
+import { safeStorage } from '../utils/storage';
 
 interface BiometricLockToggleProps {
   user: User;
@@ -22,7 +23,7 @@ export default function BiometricLockToggle({ user }: BiometricLockToggleProps) 
         .then(available => {
           setIsSupported(available);
           if (available) {
-            setIsEnabled(localStorage.getItem('biometric_app_lock') === 'true');
+            setIsEnabled(safeStorage.getItem('biometric_app_lock') === 'true');
           }
         })
         .catch(console.error);
@@ -34,9 +35,9 @@ export default function BiometricLockToggle({ user }: BiometricLockToggleProps) 
     
     // Si ya está habilitado, lo deshabilitamos directamente
     if (isEnabled) {
-      localStorage.removeItem('biometric_app_lock');
-      localStorage.removeItem('biometric_credential_id');
-      localStorage.removeItem('biometric_fast_login');
+      safeStorage.removeItem('biometric_app_lock');
+      safeStorage.removeItem('biometric_credential_id');
+      safeStorage.removeItem('biometric_fast_login');
       setIsEnabled(false);
       return;
     }
@@ -88,10 +89,10 @@ export default function BiometricLockToggle({ user }: BiometricLockToggleProps) 
       if (webAuthnCredential) {
         // Guardamos el ID de la credencial
         const credentialIdBase64 = bufferToBase64URLString(webAuthnCredential.rawId);
-        localStorage.setItem('biometric_credential_id', credentialIdBase64);
-        localStorage.setItem('biometric_app_lock', 'true');
+        safeStorage.setItem('biometric_credential_id', credentialIdBase64);
+        safeStorage.setItem('biometric_app_lock', 'true');
         // Guardamos las credenciales para el inicio de sesión rápido (No es lo más seguro, pero funciona para la PWA)
-        localStorage.setItem('biometric_fast_login', JSON.stringify({ email: user.email!, password }));
+        safeStorage.setItem('biometric_fast_login', JSON.stringify({ email: user.email!, password }));
         
         setIsEnabled(true);
         setShowPasswordPrompt(false);
