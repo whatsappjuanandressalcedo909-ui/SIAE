@@ -23,8 +23,8 @@ export default function App() {
 
   return (
     <BrowserRouter>
-      <div className="min-h-screen bg-gray-50 text-gray-900 font-sans p-0 sm:p-4 flex justify-center items-center">
-        <div className="w-full max-w-lg bg-white p-6 sm:p-8 rounded-none sm:rounded-2xl shadow-none sm:shadow-sm border-0 sm:border border-gray-100 min-h-screen sm:min-h-0">
+      <div className="min-h-[100dvh] bg-gray-50 text-gray-900 font-sans p-0 sm:p-4 flex justify-center items-center">
+        <div className="w-full max-w-lg bg-white p-6 sm:p-8 rounded-none sm:rounded-2xl shadow-none sm:shadow-sm border-0 sm:border border-gray-100 min-h-[100dvh] sm:min-h-0 relative">
           <LockScreen user={user}>
             <Routes>
               <Route path="/login" element={!user ? <Login /> : <Navigate to="/" />} />

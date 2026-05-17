@@ -20,7 +20,7 @@ export default function CitizenDashboard() {
   };
 
   return (
-    <div className="flex flex-col h-[600px] w-full -mx-6 sm:-mx-8 -my-6 sm:-my-8 bg-gray-50 relative pb-[70px] rounded-none sm:rounded-2xl overflow-hidden shadow-inner font-sans">
+    <div className="flex flex-col h-[100dvh] sm:h-[600px] w-full -mx-6 sm:-mx-8 -my-6 sm:-my-8 bg-gray-50 relative pb-[70px] rounded-none sm:rounded-2xl overflow-hidden shadow-inner font-sans">
       
       {/* Content Area */}
       <div className="flex-1 p-6 overflow-y-auto w-full relative z-0">
