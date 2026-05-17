@@ -1,5 +1,8 @@
 import { useState, useRef, ChangeEvent } from 'react';
 import { Camera, AlertTriangle, UploadCloud, MapPin, X } from 'lucide-react';
+import { db, auth } from '../../../firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
+import { uploadEmergencyPicture } from '../../../lib/supabase';
 
 export default function EmergencyReport() {
   const [photo, setPhoto] = useState<File | null>(null);
@@ -7,6 +10,7 @@ export default function EmergencyReport() {
   const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
   const [address, setAddress] = useState<string | null>(null);
   const [showLocationPopup, setShowLocationPopup] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleCaptureClick = () => {
@@ -44,7 +48,6 @@ export default function EmergencyReport() {
             console.error("Error validando dirección:", error);
           }
           
-          // Ocultar popup después de 6 segundos para tener tiempo de leer
           setTimeout(() => {
             setShowLocationPopup(false);
           }, 6000);
@@ -60,9 +63,46 @@ export default function EmergencyReport() {
     }
   };
 
-  const handleReport = () => {
-    if (!photo) return;
-    alert(`Función de reporte en construcción. ¡Foto capturada! ${address ? `\nUbicación: ${address}` : location ? `\nUbicación: ${location.lat}, ${location.lng}` : ''}`);
+  const handleReport = async () => {
+    if (!photo || isSubmitting) return;
+    
+    setIsSubmitting(true);
+    try {
+      const user = auth.currentUser;
+      if (!user) {
+        throw new Error("Usuario no autenticado");
+      }
+
+      // 1. Subir la imagen a Supabase Storage (bucket contingencies/emergencies)
+      const photoURL = await uploadEmergencyPicture(user.uid, photo);
+
+      // 2. Guardar el reporte en Firestore
+      await addDoc(collection(db, "emergencies"), {
+        userId: user.uid,
+        userEmail: user.email,
+        photoUrl: photoURL,
+        location: location ? {
+          lat: location.lat,
+          lng: location.lng
+        } : null,
+        address: address || 'Ubicación desconocida',
+        status: 'pending',
+        createdAt: serverTimestamp()
+      });
+
+      alert("¡Alerta de emergencia enviada con éxito!");
+      
+      // Limpiar el estado
+      setPhoto(null);
+      setPreview(null);
+      setLocation(null);
+      setAddress(null);
+    } catch (error) {
+      console.error("Error enviando reporte:", error);
+      alert("Hubo un error al enviar el reporte. Por favor intenta de nuevo.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -118,6 +158,7 @@ export default function EmergencyReport() {
               <button 
                 onClick={handleCaptureClick}
                 className="absolute top-4 right-4 bg-black/50 backdrop-blur-md text-white p-3 rounded-full hover:bg-black/70 transition-colors"
+                disabled={isSubmitting}
               >
                 <X size={20} />
               </button>
@@ -134,10 +175,17 @@ export default function EmergencyReport() {
             
             <button
               onClick={handleReport}
-              className="w-full bg-red-600 text-white font-black uppercase tracking-widest py-5 rounded-2xl hover:bg-red-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-xl shadow-red-200"
+              disabled={isSubmitting}
+              className={`w-full bg-red-600 text-white font-black uppercase tracking-widest py-5 rounded-2xl hover:bg-red-700 active:scale-[0.98] transition-all flex items-center justify-center gap-3 shadow-xl ${isSubmitting ? 'opacity-70 cursor-not-allowed' : 'shadow-red-200'}`}
             >
-              <UploadCloud size={24} />
-              Enviar Inmediato
+              {isSubmitting ? (
+                <span className="animate-pulse">Enviando...</span>
+              ) : (
+                <>
+                  <UploadCloud size={24} />
+                  Enviar Inmediato
+                </>
+              )}
             </button>
           </div>
         )}

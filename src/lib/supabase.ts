@@ -31,3 +31,26 @@ export async function uploadProfilePicture(uid: string, file: File) {
   const { data } = supabase.storage.from('profiles').getPublicUrl(filePath);
   return data.publicUrl;
 }
+
+export async function uploadEmergencyPicture(uid: string, file: File) {
+  if (!import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+    throw new Error('Supabase no está configurado. Por favor agrega VITE_SUPABASE_URL y VITE_SUPABASE_ANON_KEY en la configuración.');
+  }
+  const fileExt = file.name.split('.').pop() || 'jpg';
+  const fileName = `${uid}-${Date.now()}.${fileExt}`;
+  const filePath = `${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from('emergencies')
+    .upload(filePath, file);
+
+  if (uploadError) {
+    if (uploadError.message.includes('row-level security')) {
+      throw new Error('Debes configurar las políticas RLS en Supabase Storage (bucket "emergencies") para permitir subir archivos.');
+    }
+    throw uploadError;
+  }
+
+  const { data } = supabase.storage.from('emergencies').getPublicUrl(filePath);
+  return data.publicUrl;
+}
