@@ -1,0 +1,6 @@
+{
+  "name": "SIAE - Sistema de Información",
+  "description": "Aplicación para la gestión de perfiles de usuario con integración de Firebase y Supabase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

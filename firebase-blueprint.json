@@ -1,0 +1,40 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "User profile information",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "createdAt": { "type": "timestamp" },
+        "firstName": { "type": "string" },
+        "middleName": { "type": "string" },
+        "lastName": { "type": "string" },
+        "secondLastName": { "type": "string" },
+        "documentType": { "type": "string" },
+        "documentNumber": { "type": "string" },
+        "phoneNumber": { "type": "string" }
+      },
+      "required": ["email", "createdAt", "firstName", "lastName", "documentType", "documentNumber", "phoneNumber"]
+    },
+    "DocumentRegistry": {
+      "title": "Document Registry",
+      "description": "Registry to enforce unique document numbers",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" }
+      },
+      "required": ["userId"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores user profiles"
+    },
+    "/documentNumbers/{docNum}": {
+      "schema": { "$ref": "#/entities/DocumentRegistry" },
+      "description": "Enforces unique document numbers per user"
+    }
+  }
+}
