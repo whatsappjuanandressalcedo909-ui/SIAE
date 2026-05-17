@@ -1,15 +1,70 @@
-import { useState, FormEvent } from 'react';
+import { useState, FormEvent, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { auth } from '../firebase';
 import Input from '../components/Input';
 import { isValidEmail } from '../utils/validation';
+import { generateChallenge, base64URLStringToBuffer } from '../utils/webauthn';
+import { Fingerprint } from 'lucide-react';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [fastLoginAvailable, setFastLoginAvailable] = useState(false);
+
+  useEffect(() => {
+    if (localStorage.getItem('biometric_fast_login') && localStorage.getItem('biometric_credential_id')) {
+      setFastLoginAvailable(true);
+    }
+  }, []);
+
+  const loginWithBiometrics = async () => {
+    try {
+      setLoading(true);
+      setError('');
+      
+      const savedCredentialId = localStorage.getItem('biometric_credential_id');
+      const savedLoginInfo = localStorage.getItem('biometric_fast_login');
+      
+      if (!savedCredentialId || !savedLoginInfo) throw new Error('No hay credenciales guardadas.');
+      
+      const { email: savedEmail, password: savedPassword } = JSON.parse(savedLoginInfo);
+      
+      const challenge = generateChallenge();
+      const credentialIdBuffer = base64URLStringToBuffer(savedCredentialId);
+
+      // Desencadenar la verificación biométrica del dispositivo
+      const assertion = await navigator.credentials.get({
+        publicKey: {
+          challenge: challenge,
+          rpId: window.location.hostname,
+          allowCredentials: [{
+            id: credentialIdBuffer,
+            type: 'public-key',
+            transports: ['internal']
+          }],
+          userVerification: 'required', 
+          timeout: 60000,
+        }
+      }) as PublicKeyCredential;
+
+      if (assertion) {
+        // Una vez que el dispositivo nos verifica, usamos los datos guardados para iniciar en Firebase
+        await signInWithEmailAndPassword(auth, savedEmail, savedPassword);
+      }
+    } catch (err: any) {
+      console.error(err);
+      if (err.name === 'NotAllowedError') {
+         setError('Autenticación biométrica cancelada.');
+      } else {
+         setError('No se pudo verificar la huella/Fast ID. Ingresa tu contraseña.');
+         setFastLoginAvailable(false);
+      }
+      setLoading(false);
+    }
+  };
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -52,8 +107,20 @@ export default function Login() {
       
       {error && <div className="bg-red-50 text-red-600 p-3 rounded-xl text-sm mb-4 font-medium border border-red-100">{error}</div>}
       
-      <Input label="Correo electrónico" type="email" placeholder="ejemplo@correo.com" value={email} onChange={(e: any) => setEmail(e.target.value)} required />
-      <Input label="Contraseña" type="password" placeholder="••••••••" value={password} onChange={(e: any) => setPassword(e.target.value)} required />
+      {fastLoginAvailable && (
+        <button 
+          type="button"
+          onClick={loginWithBiometrics}
+          disabled={loading}
+          className="w-full bg-blue-50 border border-blue-100 text-blue-700 font-bold py-4 rounded-xl hover:bg-blue-100 transition-all flex items-center justify-center gap-3 mb-6 shadow-sm"
+        >
+          <Fingerprint size={24} />
+          {loading ? 'Verificando...' : 'Inicio rápido con Huella / Face ID'}
+        </button>
+      )}
+
+      <Input label="Correo electrónico" type="email" placeholder="ejemplo@correo.com" value={email} onChange={(e: any) => setEmail(e.target.value)} required={!fastLoginAvailable} />
+      <Input label="Contraseña" type="password" placeholder="••••••••" value={password} onChange={(e: any) => setPassword(e.target.value)} required={!fastLoginAvailable} />
       
       <div className="flex justify-end mt-1 mb-4">
         <Link to="/forgot-password" className="text-sm text-gray-600 hover:text-gray-900 hover:underline">

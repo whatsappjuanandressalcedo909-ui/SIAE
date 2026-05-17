@@ -95,7 +95,7 @@ export default function Profile({ user }: { user: User }) {
              </div>
           </section>
 
-          <BiometricLockToggle />
+          <BiometricLockToggle user={user} />
 
           <button onClick={() => setShowProfileModal(true)} className="w-full bg-gray-900 text-white font-semibold px-4 py-3.5 rounded-xl hover:bg-gray-800 transition-all shadow-sm">
             Editar Perfil
