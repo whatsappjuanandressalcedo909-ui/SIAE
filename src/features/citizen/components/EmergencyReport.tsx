@@ -5,6 +5,7 @@ export default function EmergencyReport() {
   const [photo, setPhoto] = useState<File | null>(null);
   const [preview, setPreview] = useState<string | null>(null);
   const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
+  const [address, setAddress] = useState<string | null>(null);
   const [showLocationPopup, setShowLocationPopup] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -27,17 +28,26 @@ export default function EmergencyReport() {
   const captureLocation = () => {
     if ("geolocation" in navigator) {
       navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
-          });
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          setLocation({ lat, lng });
           setShowLocationPopup(true);
           
-          // Ocultar popup después de 4 segundos
+          try {
+            const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}`);
+            const data = await res.json();
+            if (data && data.display_name) {
+              setAddress(data.display_name);
+            }
+          } catch (error) {
+            console.error("Error validando dirección:", error);
+          }
+          
+          // Ocultar popup después de 6 segundos para tener tiempo de leer
           setTimeout(() => {
             setShowLocationPopup(false);
-          }, 4000);
+          }, 6000);
         },
         (error) => {
           console.error("Error obteniendo ubicación:", error);
@@ -52,8 +62,7 @@ export default function EmergencyReport() {
 
   const handleReport = () => {
     if (!photo) return;
-    // Aquí implementaremos la subida o envío del reporte de emergencia
-    alert(`Función de reporte en construcción. ¡Foto capturada! ${location ? `\nUbicación: ${location.lat}, ${location.lng}` : ''}`);
+    alert(`Función de reporte en construcción. ¡Foto capturada! ${address ? `\nUbicación: ${address}` : location ? `\nUbicación: ${location.lat}, ${location.lng}` : ''}`);
   };
 
   return (
@@ -66,13 +75,17 @@ export default function EmergencyReport() {
           </div>
           <div className="text-sm">
             <p className="font-bold">Ubicación capturada</p>
-            {location && (
-              <p className="text-gray-300 text-xs mt-0.5">
-                Lat: {location.lat.toFixed(6)}, Lng: {location.lng.toFixed(6)}
+            {address ? (
+              <p className="text-gray-300 text-xs mt-0.5 max-w-[250px] truncate">
+                {address}
               </p>
-            )}
+            ) : location ? (
+              <p className="text-gray-300 text-xs mt-0.5">
+                Buscando dirección... (Lat: {location.lat.toFixed(4)}, Lng: {location.lng.toFixed(4)})
+              </p>
+            ) : null}
           </div>
-          <button onClick={() => setShowLocationPopup(false)} className="ml-2 text-gray-400 hover:text-white">
+          <button onClick={() => setShowLocationPopup(false)} className="ml-2 text-gray-400 hover:text-white shrink-0">
             <X size={18} />
           </button>
         </div>
@@ -117,9 +130,11 @@ export default function EmergencyReport() {
                 <Camera size={20} />
               </button>
               {location && (
-                <div className="absolute top-2 left-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1 rounded flex items-center justify-center gap-1 backdrop-blur-sm">
-                  <MapPin size={10} />
-                  <span>{location.lat.toFixed(5)}, {location.lng.toFixed(5)}</span>
+                <div className="absolute top-2 left-2 right-2 bg-black/60 text-white text-[10px] px-2 py-1.5 rounded flex items-center gap-1.5 backdrop-blur-sm shadow-sm overflow-hidden">
+                  <MapPin size={12} className="shrink-0" />
+                  <span className="truncate">
+                    {address ? address : `${location.lat.toFixed(5)}, ${location.lng.toFixed(5)}`}
+                  </span>
                 </div>
               )}
             </div>
